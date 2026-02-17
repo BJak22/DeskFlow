@@ -3,14 +3,12 @@ using API.Application;
 using API.Infrastructure;
 namespace API.Api;
 
-[ApiController] // Automatyczna walidacja modelu
-[Route("api/[controller]")] // Adres np. /api/reservations
+[ApiController] 
+[Route("api/[controller]")] 
 public class ReservationsController : ControllerBase
 {
     private readonly IReservationService _service;
-
-    // Znowu Dependency Injection. Wstrzykujemy INTERFEJS, nie konkretną klasę.
-    // Dzięki temu łatwo to potem przetestować (mockowanie).
+    
     public ReservationsController(IReservationService service)
     {
         _service = service;
@@ -22,12 +20,12 @@ public class ReservationsController : ControllerBase
         try 
         {
             var id = await _service.CreateReservationAsync(dto);
-            // Zwracamy kod 201 Created
+            
             return Created($"api/reservations/{id}", id);
         }
         catch (Exception ex)
         {
-            // W prawdziwym projekcie używa się globalnego middleware do błędów
+            
             return BadRequest(ex.Message);
         }
     }
