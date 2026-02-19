@@ -14,3 +14,16 @@ public class ReservationResponseDto
     public string DeskCode { get; set; } 
     public DateTime Date { get; set; }
 }
+
+public class CreateDeskDto
+{
+    public string Code { get; set; }
+    public bool HasDualMonitor { get; set; }
+}
+
+public class DeskResponseDto
+{
+    public int Id { get; set; }
+    public string Code { get; set; }
+    public bool HasDualMonitor { get; set; }
+}
