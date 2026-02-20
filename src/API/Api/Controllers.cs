@@ -21,7 +21,7 @@ public class ReservationsController : ControllerBase
         {
             var res = await _service.CreateReservationAsync(dto);
             
-            return Created($"api/reservations/{res}", res);
+            return Created($"api/reservations/{res.Id}", res);
         }
         catch (Exception ex)
         {
@@ -30,11 +30,46 @@ public class ReservationsController : ControllerBase
         }
     }
     
-    [HttpGet]
+    [HttpGet("desk/{deskId}")]
     public async Task<IActionResult> GetAllReservationsForDesk(int deskId)
     {
-            var res = await _service.GetDeskReservationsAsync(deskId);
+        var res = await _service.GetDeskReservationsAsync(deskId);
+        return Ok(res);
+    }
+    
+    [HttpPatch("{id}")]
+    public async Task<IActionResult> Update(int id, UpdateReservationDto dto)
+    {
+        if (id != dto.Id)
+        {
+            return BadRequest("ID in URL and ID in data doesn't match");
+        }
+        
+        try 
+        {
+            var res = await _service.UpdateReservationAsync(dto);
+            
             return Ok(res);
+        }
+        catch (Exception ex)
+        {
+            
+            return BadRequest(ex.Message);
+        }
+    }
+    
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteReservation(int id)
+    {
+        try 
+        {
+            await _service.DeleteReservationAsync(id);
+            return NoContent(); 
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(ex.Message);
+        }
     }
     
 }
@@ -58,7 +93,7 @@ public class DeskController : ControllerBase
         {
             var res = await _service.CreateDeskAsync(dto);
             
-            return Created($"api/desk/{res}", res);
+            return Created($"api/desk/{res.Id}", res);
         }
         catch (Exception ex)
         {
@@ -67,4 +102,45 @@ public class DeskController : ControllerBase
         }
     }
     
+    [HttpGet]
+    public async Task<IActionResult> GetAllDesks()
+    {
+        var res = await _service.GetDesksAsync();
+        return Ok(res);
+    }
+    
+    [HttpPatch("{id}")]
+    public async Task<IActionResult> Update(int id, UpdateDeskDto dto)
+    {
+        if (id != dto.Id)
+        {
+            return BadRequest("ID in URL and ID in data doesn't match");
+        }
+
+        try 
+        {
+            var res = await _service.UpdateDeskAsync(dto);
+            
+            return Ok(res);
+        }
+        catch (Exception ex)
+        {
+            
+            return BadRequest(ex.Message);
+        }
+    }
+    
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteDesk(int id)
+    {
+        try 
+        {
+            await _service.DeleteDeskAsync(id);
+            return NoContent(); 
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(ex.Message);
+        }
+    }
 }
