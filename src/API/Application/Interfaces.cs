@@ -16,3 +16,9 @@ public interface IDeskService
     Task<DeskResponseDto> UpdateDeskAsync(UpdateDeskDto dto);
     Task DeleteDeskAsync(int id);
 }
+
+public interface IAuthService
+{
+    Task RegisterAsync(RegisterDto dto);
+    Task<AuthResponseDto> LoginAsync(LoginDto dto);
+}
