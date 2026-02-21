@@ -2,6 +2,10 @@
 using API.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 namespace API.Application;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 
 
 public class ReservationService : IReservationService
@@ -216,5 +220,74 @@ public class DeskService : IDeskService
         
         _context.Desks.Remove(check);
         await _context.SaveChangesAsync();
+    }
+}
+
+public class AuthService : IAuthService
+{
+    private readonly AppDbContext _context;
+    private readonly IConfiguration _configuration;
+
+    public AuthService(AppDbContext context, IConfiguration configuration)
+    {
+        _context = context;
+        _configuration = configuration;
+    }
+
+    public async Task RegisterAsync(RegisterDto dto)
+    {
+        var userExists = await _context.Users.AnyAsync(u => u.Email == dto.Email);
+        if (userExists)
+            throw new Exception("email already used");
+        
+        var passwordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password);
+        
+        var user = new User
+        {
+            Email = dto.Email,
+            PasswordHash = passwordHash,
+            Role = "User"
+        };
+
+        _context.Users.Add(user);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task<AuthResponseDto> LoginAsync(LoginDto dto)
+    {
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == dto.Email);
+        if (user == null || !BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
+        {
+            throw new Exception("Incorrect email  or password!");
+        }
+        
+        var token = GenerateJwtToken(user);
+        return new AuthResponseDto { Token = token };
+    }
+
+    private string GenerateJwtToken(User user)
+    {
+        var jwtKey = _configuration["Jwt:Key"];
+        var jwtIssuer = _configuration["Jwt:Issuer"];
+        var jwtAudience = _configuration["Jwt:Audience"];
+        
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey!));
+        var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+        
+        var claims = new[]
+        {
+            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+            new Claim(ClaimTypes.Email, user.Email),
+            new Claim(ClaimTypes.Role, user.Role)
+        };
+
+        var token = new JwtSecurityToken(
+            issuer: jwtIssuer,
+            audience: jwtAudience,
+            claims: claims,
+            expires: DateTime.Now.AddHours(2),
+            signingCredentials: credentials);
+
+        return new JwtSecurityTokenHandler().WriteToken(token);
     }
 }
